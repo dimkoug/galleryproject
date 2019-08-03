@@ -33,7 +33,7 @@
             <ul>
               {% if object.gallery_media.all %}
                 {% for media in object.gallery_media.all %}
-                <li>{{media}}</li>
+                <li><a href="{% url 'galleries:gallery-detail' media.pk %}">{{media}}</a></li>
                 {% endfor %}
               {% endif %}
             </ul>

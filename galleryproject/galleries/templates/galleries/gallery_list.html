@@ -15,6 +15,7 @@
       <thead>
         <tr>
           <th>Gallery</th>
+          <th>Photos</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -22,6 +23,7 @@
         {% for object in object_list %}
         <tr>
           <td><a href="{% url 'galleries:gallery-detail' object.pk %}">{{object.name}}</a></td>
+          <td>{{object.media.all.count}}</td>
           <td>
             <a class="btn btn-warning" href="{% url 'galleries:gallery-update' object.pk %}"><i class="fas fa-edit"></i></a>
             <a class="btn btn-danger" href="{% url 'galleries:gallery-delete' object.pk %}"><i class="fas fa-times"></i></a>

@@ -11,7 +11,6 @@ from django.utils.html import format_html, mark_safe
 
 def _delete_file(path):
     """ Deletes file from filesystem. """
-    print(path)
     if os.path.isfile(path):
         os.remove(path)
 
