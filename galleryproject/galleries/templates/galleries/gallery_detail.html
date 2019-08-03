@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block page_title %}{{object}}{% endblock %}
+
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <a href="{% url 'galleries:media-create' %}?gallery={{object.pk}}" class="btn btn-primary float-right"> <i class="fas fa-plus"></i>Upload new images</a>
+    {% if uploaded > 1 %}
+    <a href="{% url 'galleries:uploaded-images' object.pk %}" class="btn btn-primary"> <i class="fas fa-plus"></i>Use uploaded images</a>
+    {% endif %}
+  </div>
+</div>
+{% if object.media %}
+<div class="row">
+  <div class="col-12">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Image</th>
+          <th>Caption</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for media in object.media.all %}
+        <tr>
+          <td><a href="{% url 'galleries:media-detail' media.pk %}">
+            {% if media.image %}
+                {{media.get_thumb}}
+            {% endif %}</a>
+          </td>
+          <td>{{media.caption}}</td>
+          <td>
+            <a class="btn btn-warning" href="{% url 'galleries:media-update' media.pk %}?gallery={{object.pk}}"><i class="fas fa-edit"></i></a>
+            <a class="btn btn-danger" href="{% url 'galleries:media-delete' media.pk %}?gallery={{object.pk}}"><i class="fas fa-times"></i></a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      </table>
+    </div>
+  </div>
+{% endif %}
+
+{% endblock %}

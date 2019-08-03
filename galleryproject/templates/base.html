@@ -1,0 +1,82 @@
+{% load static from staticfiles %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
+    <meta name="generator" content="Jekyll v3.8.5">
+    <title>{% block page_title %}{% endblock %}</title>
+    <link href="{% static 'bootstrap4/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'bootstrap4/css/all.min.css' %}" rel="stylesheet">
+
+    <style>
+      .bd-placeholder-img {
+        font-size: 1.125rem;
+        text-anchor: middle;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
+      @media (min-width: 768px) {
+        .bd-placeholder-img-lg {
+          font-size: 3.5rem;
+        }
+      }
+    </style>
+    <!-- Custom styles for this template -->
+    <link href="{% static 'bootstrap4/css/dashboard.css' %}" rel="stylesheet">
+  </head>
+  <body>
+    <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
+  <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="{% url 'galleries:gallery-list' %}">Galleries</a>
+</nav>
+
+<div class="container-fluid">
+  <div class="row">
+    <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+      <div class="sidebar-sticky">
+        <ul class="nav flex-column">
+          <li class="nav-item">
+            {% url 'galleries:gallery-list' as gallery_url %}
+            {% url 'galleries:media-list' as media_url %}
+            <a class="nav-link {% if request.path == gallery_url %}active {% endif %}" href="{{gallery_url}}">
+              <span data-feather="home"></span>
+              Dashboard <span class="sr-only">(current)</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if request.path == gallery_url %}active {% endif %}" href="{{gallery_url}}">
+              <span data-feather="file"></span>
+              Galleries
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if request.path == media_url %}active {% endif %}" href="{{media_url}}">
+              <span data-feather="file"></span>
+              Media
+            </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Dashboard</h1>
+      </div>
+      {% include 'messages.html' %}
+      {% block content %}
+      {% endblock %}
+    </div>
+    </main>
+  </div>
+</div>
+  <script src="{% static 'bootstrap4/js/jquery-3.4.1.min.js' %}"></script>
+  <script src="{% static 'bootstrap4/js/popper.min.js' %}"></script>
+  <script src="{% static 'bootstrap4/js/bootstrap.min.js' %}"></script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block page_title %}Gallery List{% endblock %}
+
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <a href="{% url 'galleries:media-create' %}" class="btn btn-primary float-right"> <i class="fas fa-plus"></i>Add Media</a>
+  </div>
+</div>
+<div class="row">
+  <div class="col-12">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Image</th>
+          <th>Caption</th>
+          <th>Galleries</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for object in object_list %}
+        <tr>
+          <td><a href="{% url 'galleries:media-detail' object.pk %}">
+            {% if object.image %}
+              {{object.get_thumb}}
+            {% endif %}</a>
+          </td>
+          <td>{{object.caption}}</td>
+          <td>
+            <ul>
+              {% if object.gallery_media.all %}
+                {% for media in object.gallery_media.all %}
+                <li>{{media}}</li>
+                {% endfor %}
+              {% endif %}
+            </ul>
+          </td>
+          <td>
+            <a class="btn btn-warning" href="{% url 'galleries:media-update' object.pk %}"><i class="fas fa-edit"></i></a>
+            <a class="btn btn-danger" href="{% url 'galleries:media-delete' object.pk %}"><i class="fas fa-times"></i></a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      </table>
+    </div>
+  </div>
+
+
+{% endblock %}

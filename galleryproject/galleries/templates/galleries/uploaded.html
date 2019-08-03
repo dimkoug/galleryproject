@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block page_title %}Gallery List{% endblock %}
+
+
+{% block content %}
+<div class="row">
+  <form class="" action="" method="post">
+    {% csrf_token %}
+    <div class="col-12">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Image</th>
+            <th>Select</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for object in images %}
+          <tr>
+            <td>
+              {% if object.image %}
+                {{object.get_thumb}}
+              {% endif %}
+            </td>
+            <td>
+              <input type="checkbox" name="image[]" value="{{object.pk}}">
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        </table>
+      </div>
+    </div>
+    <input type="submit" name="save" value="save">
+  </form>
+
+
+
+{% endblock %}
