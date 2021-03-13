@@ -9,16 +9,25 @@ This file is used to create a local settings_local.py file for development
 
 DEBUG = True
 
+CORS_ORIGIN_WHITELIST = [
+     'http://localhost:3000'
+]
+
 ALLOWED_HOSTS = ['127.0.0.1']
 INTERNAL_IPS = ('127.0.0.1', '0.0.0.0')
 
+
 INSTALLED_APPS += (
+    'corsheaders',
     'debug_toolbar',
     'django_extensions',
 )
 
+GOOGLE_MAPS_API_KEY = ''
+
 MIDDLEWARE += (
     'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 )
 
 DEBUG_TOOLBAR_PANELS = [
@@ -35,6 +44,11 @@ DEBUG_TOOLBAR_PANELS = [
     'debug_toolbar.panels.logging.LoggingPanel',
     'debug_toolbar.panels.redirects.RedirectsPanel'
 ]
+
+DEBUG_TOOLBAR_CONFIG = {
+    'SHOW_TOOLBAR_CALLBACK': lambda request: True,
+    'EXTRA_SIGNALS': [],
+}
 
 TEMPLATES[0]['OPTIONS']['loaders'] = (
     'django.template.loaders.filesystem.Loader',
@@ -82,10 +96,20 @@ DATABASES = {
 
 
 AUTH_PASSWORD_VALIDATORS = []
-
+SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
+SESSION_CACHE_ALIAS = "default"
 
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
     }
 }
+
+
+try:
+    import gdal
+    if os.name == 'nt':
+        os.environ['PATH'] = os.path.join(VIRTUAL_ENV_DIR, r'.\Lib\site-packages\osgeo') + ';' + os.environ['PATH']
+        os.environ['PROJ_LIB'] = os.path.join(VIRTUAL_ENV_DIR, r'.\Lib\site-packages\osgeo\data\proj') + ';' + os.environ['PATH']
+except:
+    pass
