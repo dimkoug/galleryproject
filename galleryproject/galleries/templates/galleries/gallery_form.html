@@ -1,32 +1,85 @@
 {% extends "base.html" %}
+{% load core %}
+
 
 {% block content %}
-<div class="row">
-  <div class="col-12">
-    <form method="post" enctype="multipart/form-data">{% csrf_token %}
-        {{ form.as_p }}
-        <div class="row">
-          <div class="col-12">
-            <input class="btn btn-primary float-right" type="submit" value="Save">
-            <input class="btn btn-primary" name="continue" type="submit" value="Save and continue editing">
-            {% if form.instance.pk %}
-            <a class="btn btn-danger" href="{% url 'galleries:gallery-delete' form.instance.pk %}">Delete</a>
-            {% endif %}
-          </div>
-        </div>
-    </form>
-    </div>
-  </div>
-  {% if form.instance.image %}
-<hr>
-  <div class="row">
-    <h3>Currently image thumbnail</h3>
+<div class="row py-2">
     <div class="col-12">
+        <form method="post" enctype='multipart/form-data' novalidate>{% csrf_token %}
+            <div class="card m-2 py-2">
+              <div class="card-body">
+                {{form.errors}}
+                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                  <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab" aria-controls="info" aria-selected="true">Info</button>
+                  </li>
+                  <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="media-tab" data-bs-toggle="tab" data-bs-target="#media" type="button" role="tab" aria-controls="media" aria-selected="false">Media</button>
+                  </li>
+                </ul>
+                <div class="tab-content">
+                    <div class="tab-pane active" id="info" role="tabpanel" aria-labelledby="info-tab" tabindex="0">
+                        <div class="row">
+                            <div class="col-6">
+                              <div class="form-group">
+                                {{ form.name.label_tag }}
+                                {{form.name}}
+                                {% if form.name.errors %}
+                                <div class="invalid-feedback">
+                                  {{form.name.errors}}
+                                </div>
+                                {%endif%}
+                                {% if form.name.help_text %}
+                                  <small class="form-text text-muted">{{ form.first_name.help_text }}</small>
+                                {% endif %}
+                              </div>
+                            </div>
+                            <div class="col-6">
+                              <div class="form-group">
+                                {{ form.image.errors }}
+                                {{ form.image.label_tag }}
+                                {{form.image}}
+                                {% if form.image.help_text %}
+                                  <small class="form-text text-muted">{{ form.image.help_text }}</small>
+                                {% endif %}
+                              </div>
+                            </div>
+                          </div>
+                    </div> <!-- info -->
+                    <div class="tab-pane fade" id="media" role="tabpanel" aria-labelledby="media-tab">media
+                      <div class="row">
+                        <div class="col-12">
+                          <div class="mb-3">
+                            <label for="logos" class="form-label">Media</label>
+                            <input class="form-control" type="file" id="media" name="media" multiple>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="row">
+                        {% for media in form.instance.media.all %}
+                          <div class="col-2">
+                            {% if media.image %}
+                              <img src="{{media.image.url}}" alt="" class="img-thumbnail" alt="" width="100px">
+                              <a href="{% url 'delete'  %}?model={% get_model_name media %}&app={% get_model_app model %}&id={{media.id}}" class="delete"><i class="bi bi-x text-danger" style="font-size:1.5rem;"></i></a>
+                            {% endif %}
+                          </div>
+                        {% endfor %}
+                      </div>
+                    </div> <!--media tab-->
+                  </div>
 
-      {{form.instance.get_thumb}}
+                {% include 'partials/form_buttons.html' with form=form %}
+              </div>
+            </div>
+            
+          </form>
 
     </div>
-  </div>
-  {% endif %}
+
+
+</div>
+
+
+
 
 {% endblock %}

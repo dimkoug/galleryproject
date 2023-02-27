@@ -8,33 +8,15 @@ from django.dispatch.dispatcher import receiver
 from django.utils.html import format_html, mark_safe
 # Create your models here.
 
+from core.models import Timestamped
+from core.storage import OverwriteStorage
+from profiles.models import Profile
+
 
 def _delete_file(path):
     """ Deletes file from filesystem. """
     if os.path.isfile(path):
         os.remove(path)
-
-
-class MediaFileSystemStorage(FileSystemStorage):
-    def get_available_name(self, name, max_length=None):
-        if max_length and len(name) > max_length:
-            raise(Exception("name's length is greater than max_length"))
-        return name
-
-    def _save(self, name, content):
-        if self.exists(name):
-            # if the file exists, do not call the superclasses _save method
-            return name
-        # if the file is new, DO call it
-        return super(MediaFileSystemStorage, self)._save(name, content)
-
-
-class Timestamped(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        abstract = True
 
 
 def get_upload_path(instance, filename):
@@ -45,18 +27,16 @@ def get_upload_path(instance, filename):
         datetime.datetime.now().year, name, filename))
 
 
+
 class Media(Timestamped):
     image = models.ImageField(upload_to=get_upload_path,
-                              storage=MediaFileSystemStorage())
-    caption = models.CharField(blank=True, max_length=100)
-    name = models.CharField(blank=True, max_length=255)
-    md5sum = models.CharField(blank=True, max_length=255)
-
+                              storage=OverwriteStorage())
     class Meta:
         default_related_name = 'media'
         verbose_name = 'media'
         verbose_name_plural = 'media'
 
+    
     def __str__(self):
         return os.path.basename(self.image.name)
 
@@ -66,17 +46,10 @@ class Media(Timestamped):
                                self.image.url)
         return ''
 
-    def save(self, *args, **kwargs):
-        if not self.pk:  # file is new
-            md5 = hashlib.md5()
-            for chunk in self.image.chunks():
-                md5.update(chunk)
-            self.md5sum = md5.hexdigest()
-        super(Media, self).save(*args, **kwargs)
-
 
 class Gallery(Timestamped):
     name = models.CharField(max_length=100)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
     media = models.ManyToManyField(Media, through='GalleryMedia', related_name='gallery_media')
 
     class Meta:

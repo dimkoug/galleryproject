@@ -18,8 +18,18 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 
+from core.functions import delete_model
+
+
+from .views import IndexView
+
 urlpatterns = [
-    path('', include('galleries.urls')),
+    path('', IndexView.as_view(), name='index'),
+    path('galleries/', include('galleries.urls',namespace='galleries')),
+    path('delete/', delete_model, name='delete'),
+    path('users/', include('users.urls')),
+    path('users/api/', include('users.api.routers')),
+    path('profiles/', include('profiles.urls')),
     path('admin/', admin.site.urls),
 ]
 

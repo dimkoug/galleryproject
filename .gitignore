@@ -1,14 +1,14 @@
-env
+.venv
+.env
 virtualenv
 settings_local.py
-
 .DS_Store
 *.db
 *.sqlite3
 *.pyc
 __pycache__
 ._*
-
+migrations
 settings*_*local.py
 /mail
 

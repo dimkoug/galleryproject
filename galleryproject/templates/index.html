@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+
+
+{% block content %}
+<div class="row mt-2">
+    <div class="card col-4 py-2 m-2">
+        <div class="card-header">
+            Galleries
+          </div>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item"> <a href="{% url 'galleries:gallery-list' %}">Galleries</a> </li>
+        </ul>
+      </div>
+</div>
+
+
+
+{% endblock content %}

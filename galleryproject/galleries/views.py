@@ -1,27 +1,64 @@
 from django.shortcuts import render
-from django.urls import reverse_lazy
-from django.shortcuts import get_object_or_404
-from django.contrib import messages
+from django.urls import reverse, reverse_lazy
+from django.template.loader import render_to_string
 from django.db.models import Prefetch
-from django.http import HttpResponseRedirect
-from django.views.generic.list import ListView
+from django.http import JsonResponse
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic.detail import DetailView
+from django.views.generic.list import ListView
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
 
+
+from core.functions import is_ajax
+from core.mixins import PaginationMixin, ModelMixin, SuccessUrlMixin,FormMixin,QueryListMixin, AjaxDeleteMixin
+
+
 from .models import Gallery, Media, GalleryMedia
-from .forms import GalleryForm, MediaForm
-from .mixins import SuccessMixin
+from .forms import GalleryForm
 
 
-class GalleryList(ListView):
+class BaseListView(PaginationMixin,QueryListMixin,ModelMixin, LoginRequiredMixin, ListView):
+    def dispatch(self, *args, **kwargs):
+        self.ajax_list_partial = '{}/partials/{}_list_partial.html'.format(self.model._meta.app_label,self.model.__name__.lower())
+        return super().dispatch(*args, **kwargs)
+    
+    def get(self, request, *args, **kwargs):
+        self.object_list = self.get_queryset()
+        context = self.get_context_data()
+        if is_ajax(request):
+            html_form = render_to_string(
+                self.ajax_list_partial, context, request)
+            return JsonResponse(html_form, safe=False)
+        return super().get(request, *args, **kwargs)
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.filter(profile_id=self.request.user.profile.id)
+        return queryset
+
+
+
+
+class GalleryList(BaseListView):
     model = Gallery
-    queryset = Gallery.objects.prefetch_related('gallerymedia')
+    queryset = Gallery.objects.select_related('profile').prefetch_related('gallerymedia')
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.filter(profile_id=self.request.user.profile.id)
+        return queryset
 
 
 class GalleryDetail(DetailView):
     model = Gallery
-    queryset = Gallery.objects.prefetch_related('gallerymedia')
+    queryset = Gallery.objects.select_related('profile').prefetch_related('gallerymedia')
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.filter(profile_id=self.request.user.profile.id)
+        return queryset
+    
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         media_images = [media.pk for media in self.get_object().media.all()]
@@ -32,135 +69,49 @@ class GalleryDetail(DetailView):
         return context
 
 
-class GalleryCreate(CreateView):
+class GalleryCreate(ModelMixin, LoginRequiredMixin,SuccessUrlMixin,FormMixin, CreateView):
+    model = Gallery
+    form_class = GalleryForm
+
+    def form_valid(self,form):
+        form.instance.profile = self.request.user.profile
+        form.save()
+        media = self.request.FILES.getlist('media')
+        if media:
+            for m in media:
+                m_created = Media.objects.create(image=m)
+                form.instance.media.add(m_created)
+        return super().form_valid(form)
+
+
+class GalleryUpdate(ModelMixin, LoginRequiredMixin,SuccessUrlMixin,FormMixin, UpdateView):
     model = Gallery
     form_class = GalleryForm
     success_url = reverse_lazy('galleries:gallery-list')
 
-    def form_valid(self, form):
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.filter(profile_id=self.request.user.profile.id)
+        return queryset
+
+    def form_valid(self,form):
         form.save()
-        message_text = 'Your {} was created successfully!'.format(form.instance)
-        messages.success(self.request, message_text)
-        if 'continue' in self.request.POST:
-            return HttpResponseRedirect(
-                    reverse_lazy('galleries:gallery-update',
-                                 kwargs={'pk': form.instance.pk}))
-        else:
-            return super().form_valid(form)
+        media = self.request.FILES.getlist('media')
+        if media:
+            for m in media:
+                m_created = Media.objects.create(image=m)
+                form.instance.media.add(m_created)
+        return super().form_valid(form)
 
 
-class GalleryUpdate(UpdateView):
+class GalleryDelete(ModelMixin, LoginRequiredMixin,SuccessUrlMixin,AjaxDeleteMixin,DeleteView):
     model = Gallery
-    form_class = GalleryForm
-    success_url = reverse_lazy('galleries:gallery-list')
+    ajax_partial = 'partials/ajax_delete_modal.html'
 
-    def form_valid(self, form):
-        form.save()
-        message_text = 'Your {} was updated successfully!'.format(form.instance)
-        messages.success(self.request, message_text)
-        if 'continue' in self.request.POST:
-            return HttpResponseRedirect(reverse_lazy(
-                'galleries:gallery-update', kwargs={'pk': form.instance.pk}))
-        else:
-            return super().form_valid(form)
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.filter(profile_id=self.request.user.profile.id)
+        return queryset
 
 
-class GalleryDelete(DeleteView):
-    model = Gallery
-    success_url = reverse_lazy('galleries:gallery-list')
-
-
-class MediaList(ListView):
-    model = Media
-    queryset = Media.objects.prefetch_related('gallery_media')
-
-
-class MediaDetail(DetailView):
-    model = Media
-    queryset = Media.objects.prefetch_related('gallery_media')
-
-
-class MediaCreate(SuccessMixin, CreateView):
-    model = Media
-    form_class = MediaForm
-
-    def form_valid(self, form):
-        obj = form.save(commit=False)
-        gallery = None
-        if 'gallery' in self.request.GET:
-            gallery = Gallery.objects.get(pk=self.request.GET.get('gallery'))
-        message_text = 'Your {} was created successfully!'.format(form.instance)
-        messages.success(self.request, message_text)
-        if self.request.FILES['image']:
-            for f in self.request.FILES.getlist('image'):
-                print(f.name)
-                try:
-                    obj = Media.objects.get(name=f.name)
-                except Media.DoesNotExist:
-                    obj.pk = None
-                    obj.name = f.name
-                    obj.image = f
-                    obj.save()
-                if gallery:
-                    gallery.media.add(obj)
-
-        if 'continue' in self.request.POST:
-            return HttpResponseRedirect(
-                    reverse_lazy('galleries:media-update',
-                                 kwargs={'pk': form.instance.pk}))
-        else:
-            return super().form_valid(form)
-
-
-class MediaUpdate(SuccessMixin, UpdateView):
-    model = Media
-    form_class = MediaForm
-
-    def form_valid(self, form):
-        form.save()
-        message_text = 'Your {} was updated successfully!'.format(form.instance)
-        messages.success(self.request, message_text)
-        if 'continue' in self.request.POST:
-            return HttpResponseRedirect(reverse_lazy(
-                'galleries:media-update', kwargs={'pk': form.instance.pk}))
-        else:
-            return super().form_valid(form)
-
-
-class MediaDelete(SuccessMixin, DeleteView):
-    model = Media
-
-    def delete(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        if 'gallery' in self.request.GET:
-            gallery = Gallery.objects.get(pk=self.request.GET.get('gallery'))
-            gallery.media.remove(self.object)
-        exists = ''
-        media = GalleryMedia.objects.filter(media=self.object)
-        if not media:
-            self.object.delete()
-        else:
-            message_text = 'Your {} is used in some galleries'.format(self.object)
-            messages.error(self.request, message_text)
-        return HttpResponseRedirect(super().get_success_url())
-
-
-def uploaded_image(request, pk):
-    context = {}
-    template = 'galleries/uploaded.html'
-    gallery = get_object_or_404(Gallery, pk=pk)
-    context['gallery'] = gallery
-    media_images = [media.pk for media in gallery.media.all()]
-    images = Media.objects.exclude(
-            pk__in=media_images)
-    if request.method == 'POST':
-        for pk in request.POST.getlist('image[]'):
-            image = Media.objects.get(pk=pk)
-            gallery.media.add(image)
-            media_images = [media.pk for media in gallery.media.all()]
-            images = Media.objects.exclude(
-                pk__in=media_images)
-        return HttpResponseRedirect(reverse_lazy(
-                'galleries:gallery-detail', kwargs={'pk': gallery.pk}))
-    context['images'] = images
-    return render(request, template, context)
