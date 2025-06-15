@@ -17,7 +17,6 @@ node_modules
 
 virtualenv
 /*virtualenv*
-/*env*
 venv
 env
 
@@ -36,3 +35,4 @@ public/static
 virtualenv
 *.swp
 *.bat
+celerybeat-*
