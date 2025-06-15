@@ -8,7 +8,6 @@ settings_local.py
 *.pyc
 __pycache__
 ._*
-migrations
 settings*_*local.py
 /mail
 
